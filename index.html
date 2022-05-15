@@ -39,7 +39,7 @@
 
 			const renderer = new THREE.WebGLRenderer( { antialias: true } );
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setSize( window.innerWidth, window.innerWidth );
 			renderer.outputEncoding = THREE.sRGBEncoding;
 			container.appendChild( renderer.domElement );
 
@@ -88,7 +88,7 @@
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerWidth );
 
 			};
 
