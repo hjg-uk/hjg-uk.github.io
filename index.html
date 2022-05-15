@@ -1,39 +1,110 @@
 <!DOCTYPE html>
 <html>
 	<body>
-		<h1>Hello World</h1>
+		<h1>Hello Worlds</h1>
 		<p>I'm hosted with GitHub Pages.</p>
-		<div id="restaurant-item-1"></div>
+		<div id="dish"></div>
 
-		<script src="https://threejs.org/build/three.js"></script>
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
 
-		<script>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "/node_modules/three/build/three.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import * as THREE from 'three';
+
+			import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js';
+
+			import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
+			import { RoomEnvironment } from '/node_modules/three/examples/jsm/environments/RoomEnvironment.js';
+
+			import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+			import { DRACOLoader } from '/node_modules/three/examples/jsm/loaders/DRACOLoader.js';
+
+			let mixer;
+
+			const clock = new THREE.Clock();
+			const container = document.getElementById( 'dish' );
+
+			const stats = new Stats();
+			container.appendChild( stats.dom );
+
+			const renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( 1 );
+			renderer.setSize( window.innerWidth, window.innerWidth );
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			container.appendChild( renderer.domElement );
+
+			const pmremGenerator = new THREE.PMREMGenerator( renderer );
 
 			const scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xbfe3dd );
+			scene.environment = pmremGenerator.fromScene( new RoomEnvironment(), 0.04 ).texture;
 
-			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			const camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerWidth, 1, 100 );
+			camera.position.set( 5, 2, 8 );
 
-			const renderer = new THREE.WebGLRenderer();
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer.domElement );
+			const controls = new OrbitControls( camera, renderer.domElement );
+			controls.target.set( 0, 0.5, 0 );
+			controls.update();
+			controls.enablePan = false;
+			controls.enableDamping = true;
 
-			const geometry = new THREE.BoxGeometry();
-			const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			const cube = new THREE.Mesh( geometry, material );
-			scene.add( cube );
+			const dracoLoader = new DRACOLoader();
+			dracoLoader.setDecoderPath( '/node_modules/three/examples/js/libs/draco/gltf/' );
 
-			camera.position.z = 5;
+			const loader = new GLTFLoader();
+			loader.setDRACOLoader( dracoLoader );
+			loader.load( '/models/LittlestTokyo.glb', function ( gltf ) {
 
-			function animate() {
-				requestAnimationFrame( animate );
+				const model = gltf.scene;
+				model.position.set( 1, 1, 0 );
+				model.scale.set( 0.01, 0.01, 0.01 );
+				scene.add( model );
 
-				cube.rotation.x += 0.01;
-				cube.rotation.y += 0.01;
+				mixer = new THREE.AnimationMixer( model );
+				mixer.clipAction( gltf.animations[ 0 ] ).play();
 
-				renderer.render( scene, camera );
+				animate();
+
+			}, undefined, function ( e ) {
+
+				console.error( e );
+
+			} );
+
+
+			window.onresize = function () {
+
+				camera.aspect = window.innerWidth / window.innerWidth;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerWidth );
+
 			};
 
-			animate();
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				const delta = clock.getDelta();
+
+				mixer.update( delta );
+
+				controls.update();
+
+				stats.update();
+
+				renderer.render( scene, camera );
+
+			}
 
 		</script>
 
